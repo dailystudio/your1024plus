@@ -20,18 +20,27 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { 
+  initializeFirebase, 
+  signInAnonymouslyFirebase, 
+  storeSuccessfulAnswer 
+} from './firebaseUtils';
 
 const numbers = ref([]);
 const expression = ref('');
 const expressionResult = ref('');
 const showResult = ref(false);
-
 const isCorrect = ref(false);
+
+let startTime, endTime;
+let userId; // Variable to store user ID
 
 // 生成随机数字 (2的指数倍)
 function generateNumbers() {
   numbers.value = [];
+  // Reset timer when generating new numbers
+  startTime = new Date();
   const exponents = [2, 3, 4, 5, 6, 7, 8, 9]; 
   for (let i = 0; i < 4; i++) {
     const randomIndex = Math.floor(Math.random() * exponents.length);
@@ -70,6 +79,7 @@ function validateInput() {
 
 // 检查答案
 function checkAnswer() {
+  console.log("numbers:", numbers.value);
   if (expression.value === '') {
     return; // Don't evaluate if the expression is empty
   }
@@ -77,6 +87,18 @@ function checkAnswer() {
   try {
     const result = eval(expression.value);
     isCorrect.value = result === 1024;
+    endTime = new Date();
+
+    if (isCorrect.value) {
+      if (numbers.value.length === 4) { 
+        if (userId) {
+          const timeTaken = (endTime - startTime) / 1000;
+          storeSuccessfulAnswer(userId, numbers.value, expression.value, timeTaken);
+        }
+      } else {
+        console.error("Error: numbers.value does not have exactly 4 elements.");
+      }
+    }
     showResult.value = true;
   } catch (error) {
     alert('表达式错误，请检查输入!');
@@ -90,7 +112,22 @@ function changeQuestion() {
   showResult.value = false;
 }
 
-generateNumbers(); // 初始化生成随机数字
+// Initialize the game when the component is mounted
+onMounted(async () => {
+  try {
+    await initializeFirebase(); // Get auth object from the promise
+    generateNumbers();
+
+    // Sign in anonymously using the retrieved auth object
+    const user = await signInAnonymouslyFirebase();
+    userId = user.uid; // Set the user ID
+
+    // ... your other code
+  } catch (error) {
+    console.error("Error initializing Firebase:", error);
+  }
+  generateNumbers(); 
+});
 </script>
 
 <style scoped>
