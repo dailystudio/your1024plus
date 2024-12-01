@@ -65,7 +65,7 @@ function isHighlighted(num) {
 
 // 输入验证
 function validateInput() {
-  expression.value = expression.value.replace(/[^0-9+\-*/()]/g, '');
+  expression.value = expression.value.replace(/[^0-9+\-*/() ]/g, ''); 
   try {
     if (expression.value) {
       expressionResult.value = eval(expression.value);
