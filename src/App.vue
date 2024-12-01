@@ -1,12 +1,14 @@
 <template>
   <div class="container">
-    <h1>1024点游戏</h1>
+    <h1>你的1024</h1>
     <div class="numbers">
       <span v-for="num in numbers" :key="num" :class="{ highlighted: isHighlighted(num) }">{{ num }}</span>
+    </div>    
+    <input type="text" v-model="expression" @input="validateInput" placeholder="请输入表达式">
+    <div class="button-group">
+      <button @click="checkAnswer">提交</button>
+      <button @click="changeQuestion">换一题</button>
     </div>
-    <input type="text" v-model="expression" placeholder="请输入表达式">
-    <button @click="checkAnswer">提交</button>
-    <button @click="changeQuestion">换一题</button>
     <div v-if="showResult" class="result">
       <span v-if="isCorrect">恭喜你，答对了！</span>
       <span v-else>很遗憾，答错了。请再试一次。</span>
@@ -44,8 +46,17 @@ function isHighlighted(num) {
   return false;
 }
 
+// 输入验证
+function validateInput() {
+  expression.value = expression.value.replace(/[^0-9+\-*/]/g, '');
+}
+
 // 检查答案
 function checkAnswer() {
+  if (expression.value === '') {
+    return; // Don't evaluate if the expression is empty
+  }
+
   try {
     const result = eval(expression.value);
     isCorrect.value = result === 1024;
@@ -67,12 +78,17 @@ generateNumbers(); // 初始化生成随机数字
 
 <style scoped>
 .container {
+  width: 100vw; /* Make the container fill the viewport width */
+  height: 100vh; /* Make the container fill the viewport height */
   display: flex;
   flex-direction: column;
-  align-items
-: center;
+  align-items: center;
   justify-content: center;
-  height: 100vh;
+  background-color: black; 
+  color: white; /* Set default text color to white */
+  position: fixed; /* Ensure it covers the entire screen */
+  top: 0;
+  left: 0;
 }
 
 .numbers {
@@ -81,37 +97,37 @@ generateNumbers(); // 初始化生成随机数字
 }
 
 .numbers span {
+  color: #FF9900; /* Set text color to orange */
   margin: 0 10px;
 }
 
 .highlighted {
-  background-color: yellow;
+  background-color: #FFCC80; /* Use a lighter orange for better contrast */
 }
 
+/* Updated input style */
 input {
   padding: 10px;
   margin-bottom: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  background-color: #222; /* Dark background for input */
+  color: #FF9900; /* Orange text for input */
 }
 
-button {
+/* Style for both buttons */
+.button-group {
+  display: flex; /* Use flexbox for layout */
+}
+
+.button-group button {
   padding: 10px 20px;
-  background-color: #4CAF50;
+  background-color: #FF9900;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-}
-
-button:nth-child(2) { /* 选择第二个按钮 (换一题) */
-  padding: 10px 20px;
-  background-color: #008CBA; /* 蓝色 */
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-left: 10px; /* 添加一些间距 */
+  margin-right: 10px; /* Add spacing between buttons */
 }
 
 .result {
