@@ -4,11 +4,14 @@
     <div class="numbers">
       <span v-for="num in numbers" :key="num" :class="{ highlighted: isHighlighted(num) }">{{ num }}</span>
     </div>    
-    <input type="text" v-model="expression" @input="validateInput" placeholder="请输入表达式">
+    <div class="input-area"> 
+      <input type="text" v-model="expression" @input="validateInput" placeholder="请输入表达式">
+      <span class="expression-result">{{ expressionResult }}</span>
+    </div>    
     <div class="button-group">
       <button @click="checkAnswer">提交</button>
       <button @click="changeQuestion">换一题</button>
-    </div>
+    </div>    
     <div v-if="showResult" class="result">
       <span v-if="isCorrect">恭喜你，答对了！</span>
       <span v-else>很遗憾，答错了。请再试一次。</span>
@@ -21,6 +24,7 @@ import { ref } from 'vue';
 
 const numbers = ref([]);
 const expression = ref('');
+const expressionResult = ref('');
 const showResult = ref(false);
 
 const isCorrect = ref(false);
@@ -40,15 +44,28 @@ function generateNumbers() {
 // 检查数字是否需要高亮
 function isHighlighted(num) {
   const inputNums = expression.value.match(/\d+/g); 
+
+  let ret = false;
   if (inputNums) {
-    return inputNums.includes(num.toString());
+    ret = inputNums.includes(num.toString());
   }
-  return false;
+
+  console.log(`${num} is highlighted: ${ret}`)
+  return ret;
 }
 
 // 输入验证
 function validateInput() {
-  expression.value = expression.value.replace(/[^0-9+\-*/]/g, '');
+  expression.value = expression.value.replace(/[^0-9+\-*/()]/g, '');
+  try {
+    if (expression.value) {
+      expressionResult.value = eval(expression.value);
+    } else {
+      expressionResult.value = '';
+    }
+  } catch (error) {
+    expressionResult.value = ''; 
+  }
 }
 
 // 检查答案
@@ -93,27 +110,53 @@ generateNumbers(); // 初始化生成随机数字
 
 .numbers {
   margin-bottom: 20px;
-  font-size: 24px;
+  font-size: 36px; /* Increased font size */
 }
 
+/* Style for individual number boxes */
 .numbers span {
-  color: #FF9900; /* Set text color to orange */
-  margin: 0 10px;
+  display: inline-block;
+  padding: 10px 15px; /* Adjust padding for box size */
+  margin: 5px;
+  border: 3px solid white; 
+  border-radius: 5px;
+  color: white; 
+  background-color: transparent; 
+  transition: background-color 0.3s ease, color 0.3s ease; 
 }
 
 .highlighted {
-  background-color: #FFCC80; /* Use a lighter orange for better contrast */
+  background-color: #FF9900 !important;
+  color: white;
+  border-color: #FF9900 !important; /* Orange border when highlighted */
 }
 
 /* Updated input style */
 input {
   padding: 10px;
   margin-bottom: 10px;
+  font-size: 18px; /* Increased font size */
   border: 1px solid #ccc;
   border-radius: 4px;
   background-color: #222; /* Dark background for input */
   color: #FF9900; /* Orange text for input */
 }
+
+.input-area {
+  display: flex;
+  flex-direction: column; /* Arrange input and result vertically */
+  align-items: center; /* Center items horizontally */
+  width: 100%;
+  margin-bottom: 20px; /* Add margin below the input area */
+}
+
+.expression-result {
+  margin-top: 5px; 
+  color: #FF9900; /* Orange text for result */
+  font-style: italic;
+  text-align: center; /* Center the result text */
+  height: 1.5em; /* Fixed height for the expression result */
+}  
 
 /* Style for both buttons */
 .button-group {
