@@ -1,7 +1,7 @@
 // src/firebaseUtils.js
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signOut } from 'firebase/auth';
-import { getFirestore, doc, addDoc, collection } from 'firebase/firestore';
+import { getFirestore, doc, addDoc, collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import firebaseConfig from './firebaseConfig'; 
 
 // Define global variables for app, auth, and db
@@ -57,3 +57,24 @@ export const storeSuccessfulAnswer = async (userId, nums, userExpression, answer
         console.error('Error storing answer data in Firestore:', error);
     }
   }
+
+export const getTop10Times = () => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const db = getFirestore();
+      const successfulAnswersCollection = collection(db, 'successfulAnswers');
+      const q = query(successfulAnswersCollection, orderBy('answerTime'), limit(10));
+      
+      const querySnapshot = await getDocs(q);
+      const top10Times = [];
+      querySnapshot.forEach((doc) => {
+        top10Times.push({ time: doc.data().answerTime }); 
+      });
+
+      resolve(top10Times);
+    } catch (error) {
+      console.error('Error getting top 10 times:', error);
+      reject(error);
+    }
+  });
+};

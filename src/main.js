@@ -1,9 +1,22 @@
-import { createApp } from 'vue'
-import './style.css'
-import App from './App.vue'
+import { createApp } from 'vue';
+import { createRouter, createWebHistory } from 'vue-router';
+import './style.css';
+import App from './App.vue';
+import Main from './components/Main.vue';
+import Top10 from './components/Top10.vue';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import firebaseConfig from './firebaseConfig.js';
+
+// Router setup
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    { path: '/', redirect: '/app' },
+    { path: '/app', component: Main },
+    { path: '/top10', component: Top10 },
+  ],
+});
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -17,4 +30,4 @@ signInAnonymously(auth)
   })
   .catch((error) => { console.error('Error signing in anonymously:', error); });
 
-createApp(App).mount('#app')
+createApp(App).use(router).mount('#app');
