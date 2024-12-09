@@ -68,7 +68,7 @@ export const getTop10Times = () => {
       const querySnapshot = await getDocs(q);
       const top10Times = [];
       querySnapshot.forEach((doc) => {
-        top10Times.push({ time: doc.data().answerTime }); 
+        top10Times.push(doc.data()); 
       });
 
       resolve(top10Times);
