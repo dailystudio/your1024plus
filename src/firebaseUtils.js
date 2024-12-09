@@ -41,12 +41,13 @@ export const signOutFirebase = async () => {
   }
 };
 
-export const storeSuccessfulAnswer = async (userId, nums, userExpression, answerTime) => {
+export const storeSuccessfulAnswer = async (userId, nums, userExpression, answerTime, userName) => {
     try {
         const db = getFirestore();
         const successfulAnswersCollection = collection(db, 'successfulAnswers');
   
         await addDoc(successfulAnswersCollection, {
+            name: userName,
             userId: userId,
             numbers: nums,
             userExpression: userExpression,

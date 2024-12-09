@@ -1,6 +1,18 @@
 <template>
   <div class="container">
     <h1>你的1024</h1>
+    <div v-if="showDialog" class="dialog-overlay">
+      <div class="dialog-box">
+        <h3>提交你的记录</h3>
+        <p class="answer-time">{{ answerTime }}s</p> 
+        <input type="text" v-model="userName" placeholder="Anonymous">
+        <div class="dialog-buttons">
+          <button @click="confirmSubmission">确定</button>
+          <button @click="cancelSubmission">取消</button>
+        </div>
+      </div>
+    </div>
+
     <div class="numbers">
       <span v-for="num in numbers" :key="num" :class="{ highlighted: isHighlighted(num) }">{{ num }}</span>
     </div>    
@@ -9,7 +21,7 @@
       <span class="expression-result">{{ expressionResult }}</span>
     </div>    
     <div class="button-group">
-      <button @click="checkAnswer">提交</button>
+      <button @click="checkAnswer" :disabled="expressionResult !== 1024">提交</button>
       <button @click="changeQuestion">换一题</button>
     </div>    
     <div v-if="showResult" class="result">
@@ -37,6 +49,10 @@ const expressionResult = ref('');
 const showResult = ref(false);
 const isCorrect = ref(false);
 
+const showDialog = ref(false);
+const userName = ref('Anonymous');
+const submissionTime = ref('');
+const answerTime = ref(0); // To store and display answer time
 let startTime, endTime, router;
 let userId;
 
@@ -81,41 +97,53 @@ function validateInput() {
   }
 }
 
-// 检查答案
-function checkAnswer() {
-  console.log("numbers:", numbers.value);
-  if (expression.value === '') {
-    return; // Don't evaluate if the expression is empty
-  }
-
+// Handle submission confirmation
+async function confirmSubmission() {
+  showDialog.value = false; 
+  
   try {
-    const result = eval(expression.value);
-    isCorrect.value = result === 1024;
-    endTime = new Date();
-
-    if (isCorrect.value) {
-      if (numbers.value.length === 4) { 
-        if (userId) {
-          const timeTaken = (endTime - startTime) / 1000;
-          storeSuccessfulAnswer(userId, numbers.value, expression.value, timeTaken);
-        }
-      } else {
-        console.error("Error: numbers.value does not have exactly 4 elements.");
+    if (expression.value && eval(expression.value) === 1024) {
+      isCorrect.value = true;
+      if (numbers.value.length === 4 && userId) {
+        await storeSuccessfulAnswer(userId, numbers.value, expression.value, answerTime.value, userName.value);
+        // Automatically generate a new question and refresh the page after successful submission
+        changeQuestion(); // Generate a new question without refreshing the page
       }
+    } else {
+      isCorrect.value = false;
+      alert('表达式错误，请检查输入!');
     }
     showResult.value = true;
   } catch (error) {
-    alert('表达式错误，请检查输入!');
+    console.error("Error during submission:", error); 
   }
+}
+
+function cancelSubmission() {
+  showDialog.value = false;
 }
 
 // 换一题
 function changeQuestion() {
   generateNumbers();
+  startTime = new Date(); // Reset the timer for the new question
   expression.value = '';
   showResult.value = false;
 }
 
+// 检查答案 (now just shows the dialog)
+function checkAnswer() {
+  showSubmissionDialog(); 
+}
+
+function showSubmissionDialog() {
+  showDialog.value = true;
+  endTime = new Date();
+  answerTime.value = Math.round((endTime - startTime) / 1000); // Calculate and set answer time
+  const now = new Date();
+  submissionTime.value = now.toLocaleString(); 
+  userName.value = 'Anonymous'; 
+}
 
 // Initialize the game when the component is mounted
 onMounted(async () => {
@@ -140,9 +168,72 @@ const goToTop10 = () => {
 </script>
 
 <style scoped>
+/* ... (rest of your existing CSS) ... */
+
+/* Styles for the dialog box */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dialog-box {
+  background-color: black; /* Black background */
+  padding: 20px;
+  border-radius: 5px;
+  color: #FF9900; /* Orange text color */
+}
+
+.dialog-buttons {
+  color: #FF9900; /* Orange text color */
+
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end; /* Align buttons to the right */
+}
+
+.dialog-buttons button {
+  margin-left: 10px; /* Add spacing between buttons */
+  background-color: transparent; /* Transparent background */
+  border: 1px solid #FF9900; /* Orange border */
+  color: #FF9900; /* Orange text color */
+}
+.dialog-box input {
+  border-color: white; /* White border for the input */
+}
+
+/* Style for the answer time display */
+.answer-time {
+  font-size: 42px; /* Large font size for answer time */
+  margin-bottom: 10px; /* Add spacing below */
+  color: #FF9900; /* Orange text color */
+}
+
+
+/* Style for the top10 image at the bottom */
+.top10-image {
+  position: fixed;
+  bottom: 10px; /* Adjust as needed */
+  left: 50%;
+  transform: translateX(-50%); /* Center horizontally */
+  width: 48px;
+  height: 48px;
+  cursor: pointer; /* Add cursor pointer to indicate clickability*/
+}
+
+.top10-image img {
+  width: 100%; /* Make the image fill its container */
+}
+
 .container {
   width: 100vw; /* Make the container fill the viewport width */
-  height: 100vh; /* Make the container fill the viewport height */
+ height: 100vh; /* Make the container fill the viewport height */
   display: flex;
   flex-direction: column;
   align-items: center;
